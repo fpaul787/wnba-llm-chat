@@ -7,7 +7,7 @@ display(wnba_df)
 
 # COMMAND ----------
 
-wnba_clean_df = wnba_df.drop("game_id", "season_type", "team_id", "team_uid", "team_slug", "team_abbreviation", "team_short_display_name",
+wnba_clean_df = wnba_df.drop("season_type", "team_id", "team_uid", "team_slug", "team_abbreviation", "team_short_display_name",
 "team_color", "team_alternate_color", "team_logo", "opponent_team_id",
 "opponent_team_uid", "opponent_team_slug", "opponent_team_abbreviation",
 "opponent_team_short_display_name", "opponent_team_color", "opponent_team_alternate_color", "opponent_team_logo")
@@ -15,12 +15,8 @@ display(wnba_clean_df)
 
 # COMMAND ----------
 
-wnba_clean_df.columns
-
-# COMMAND ----------
-
-test_df = wnba_clean_df.limit(2)
-
+# MAGIC %md
+# MAGIC ### Convert Each Row Into a Natural Language Chunk
 
 # COMMAND ----------
 
@@ -29,22 +25,29 @@ from pyspark.sql.types import StringType
 
 @udf(returnType=StringType())
 def create_game_summary(row):
-    return (f"On {row['game_date']}, during the {row['season']}, the {row['team_display_name']} played a {row['team_home_away']} game against the {row['opponent_team_display_name']}. "
-    f"The final score was {row['team_score']}-{row['opponent_team_score']}, with the {row['team_name']} {'winning' if row['team_winner'] == True else 'losing'} the game."        
+    return (f"On {row['game_date']}, during the {row['season']} WNBA season, the {row['team_display_name']} played an {row['team_home_away']} game against the {row['opponent_team_display_name']}. "
+    f"The final score was {row['team_score']}-{row['opponent_team_score']}, with the {row['team_name']} {'winning' if row['team_winner'] == True else 'losing'} the game. "
+    f"The team recorded {row['points_in_paint']} points in the paint, {row['fast_break_points']} fast break points, "
+    f"{row['assists']} assists, {row['steals']} steals, and {row['blocks']} {'blocks' if row['blocks'] > 1 else 'block'}. "
+    f"They had {row['defensive_rebounds']} defensive rebounds and {row['offensive_rebounds']} offensive rebounds, totaling {row['total_rebounds']} rebounds. "
+    f"The team shot {row['field_goals_made']}/{row['field_goals_attempted']} from the field  for a {row['field_goal_pct']}% FG, "
+    f"{row['free_throws_made']}/{row['free_throws_attempted']} from the free throw line for a  {row['free_throw_pct']}% FT, and "
+    f"{row['three_point_field_goals_made']}/{row['three_point_field_goals_attempted']} from three point range for a {row['three_point_field_goal_pct']}% 3PT. "
+    f"They committed {row['turnovers']} turnovers, leading to {row['turnover_points']} opponent points, {row['team_turnovers']} team turnovers, and had {row['fouls']} personal fouls, "
+    f"{row['technical_fouls']} technical fouls (total {row['total_technical_fouls']}) and {row['flagrant_fouls']} flagrant fouls. "
+    f"Their largest lead was {row['largest_lead']} points."
     )
 
-df = test_df.withColumn("game_summary", create_game_summary(struct(*test_df.columns)))
-display(df)
+wnba_summaries_df = wnba_clean_df.withColumn("game_summary", create_game_summary(struct(*test_df.columns)))
+display(wnba_summaries_df)
 
 # COMMAND ----------
 
-test_df = wnba_clean_df.limit(1)
-display(test_df)
+df = wnba_summaries_df.select("game_id", "game_summary")
 
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ### Convert Each Row Into a Natural Language Chunk
+# save to table
+table_name = "wnba_game_summaries"
+df.write.mode("overwrite").saveAsTable(f"{catalog}.{schema}.{table_name}")
 
 # COMMAND ----------
 
