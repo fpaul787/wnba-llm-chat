@@ -51,4 +51,60 @@ df.write.mode("overwrite").saveAsTable(f"{catalog}.{schema}.{table_name}")
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC ### Chunking
 
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC Since our game summaries are short, there is no need to chunk.
+
+# COMMAND ----------
+
+from llama_index.core.node_parser import SentenceSplitter
+from llama_index.core import Document, set_global_tokenizer
+from transformers import AutoTokenizer
+from typing import Iterator
+
+llama_tokenizer =  AutoTokenizer.from_pretrained("hf-internal-testing/llama-tokenizer", cache_dir="/tmp/hf_cache")
+
+# Create a UDF to chunk our summaries
+@pandas_udf("array<string>")
+def read_as_chunk(texts: pd.Series) -> pd.Series:
+    return texts.apply(lambda x: [x] if pd.notnull(x) and x.strip() else [])
+
+# COMMAND ----------
+
+@pandas_udf("array<float>")
+def get_embedding(contents: pd.Series) -> pd.Series:
+    import mlflow.deployments
+    deploy_client = mlflow.deployments.get_deploy_client("databricks")
+    def get_embeddings(batch):
+        #Note: this will fail if an exception is thrown during embedding creation (add try/except if needed) 
+        response = deploy_client.predict(endpoint="databricks-gte-large-en", inputs={"input": batch})
+        return [e['embedding'] for e in response.data]
+
+    # Splitting the contents into batches of 150 items each, since the embedding model takes at most 150 inputs per request.
+    max_batch_size = 150
+    batches = [contents.iloc[i:i + max_batch_size] for i in range(0, len(contents), max_batch_size)]
+
+    # Process each batch and collect the results
+    all_embeddings = []
+    for batch in batches:
+        all_embeddings += get_embeddings(batch.tolist())
+
+    return pd.Series(all_embeddings)
+
+# COMMAND ----------
+
+table_name = "wnba_game_summaries"
+df = spark.read.table(f"{catalog}.{schema}.{table_name}")
+chunks_df = df
+    .withColumn("content", read_as_chunk("game_summary"))
+    .withColumn("embedding", get_embedding("content"))
+chunks_df.write.mode("overwrite").saveAsTable(f"{catalog}.{schema}.wnba_summary_embeddings")
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT * FROM wnba_summary_embeddings limit 1
