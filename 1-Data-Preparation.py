@@ -38,7 +38,7 @@ def create_game_summary(row):
     f"Their largest lead was {row['largest_lead']} points."
     )
 
-wnba_summaries_df = wnba_clean_df.withColumn("game_summary", create_game_summary(struct(*test_df.columns)))
+wnba_summaries_df = wnba_clean_df.withColumn("game_summary", create_game_summary(struct(*wnba_clean_df.columns)))
 display(wnba_summaries_df)
 
 # COMMAND ----------
@@ -60,13 +60,6 @@ df.write.mode("overwrite").saveAsTable(f"{catalog}.{schema}.{table_name}")
 # MAGIC Since our game summaries are short, there is no need to chunk.
 
 # COMMAND ----------
-
-from llama_index.core.node_parser import SentenceSplitter
-from llama_index.core import Document, set_global_tokenizer
-from transformers import AutoTokenizer
-from typing import Iterator
-
-llama_tokenizer =  AutoTokenizer.from_pretrained("hf-internal-testing/llama-tokenizer", cache_dir="/tmp/hf_cache")
 
 # Create a UDF to chunk our summaries
 @pandas_udf("array<string>")
