@@ -1,4 +1,14 @@
 # Databricks notebook source
+# MAGIC %pip install --quiet -U mlflow[databricks] lxml==4.9.3 transformers==4.49.0 langchain==0.3.25 databricks-vectorsearch==0.55 bs4==0.0.2
+# MAGIC dbutils.library.restartPython()
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Variables to set up index
+
+# COMMAND ----------
+
 VECTOR_SEARCH_ENDPOINT_NAME = "wnba_vs_endpoint"
 catalog = "frantzpaul_tech"
 schema = "wnba_rag"
@@ -20,6 +30,7 @@ schema = "wnba_rag"
 
 # COMMAND ----------
 
+import time
 def endpoint_exists(vsc, vs_endpoint_name):
   try:
     return vs_endpoint_name in [e['name'] for e in vsc.list_endpoints().get('endpoints', [])]
@@ -30,6 +41,28 @@ def endpoint_exists(vsc, vs_endpoint_name):
       return True
     else:
       raise e
+
+def wait_for_vs_endpoint_to_be_ready(vsc, vs_endpoint_name):
+  for i in range(180):
+    try:
+      endpoint = vsc.get_endpoint(vs_endpoint_name)
+    except Exception as e:
+      #Temp fix for potential REQUEST_LIMIT_EXCEEDED issue
+      if "REQUEST_LIMIT_EXCEEDED" in str(e):
+        print("WARN: couldn't get endpoint status due to REQUEST_LIMIT_EXCEEDED error. Please manually check your endpoint status")
+        return
+      else:
+        raise e
+    status = endpoint.get("endpoint_status", endpoint.get("status"))["state"].upper()
+    if "ONLINE" in status:
+      return endpoint
+    elif "PROVISIONING" in status or i <6:
+      if i % 20 == 0: 
+        print(f"Waiting for endpoint to be ready, this can take a few min... {endpoint}")
+      time.sleep(10)
+    else:
+      raise Exception(f'''Error with the endpoint {vs_endpoint_name}. - this shouldn't happen: {endpoint}.\n Please delete it and re-run the previous cell: vsc.delete_endpoint("{vs_endpoint_name}")''')
+  raise Exception(f"Timeout, your endpoint isn't ready yet: {vsc.get_endpoint(vs_endpoint_name)}")
   
 def index_exists(vsc, endpoint_name, index_full_name):
     try:
@@ -101,3 +134,25 @@ else:
   #Trigger a sync to update our vs content with the new data saved in the table
   wait_for_index_to_be_ready(vsc, VECTOR_SEARCH_ENDPOINT_NAME, vs_index_fullname)
   vsc.get_index(VECTOR_SEARCH_ENDPOINT_NAME, vs_index_fullname).sync()
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## Search for similar content
+
+# COMMAND ----------
+
+import mlflow.deployments
+deploy_client = mlflow.deployments.get_deploy_client("databricks")
+
+question = "Did the Sparks beat the Aces?"
+
+response = deploy_client.predict(endpoint="databricks-gte-large-en", inputs={"input": [question]})
+embeddings = [e['embedding'] for e in response.data]
+
+results = vsc.get_index(VECTOR_SEARCH_ENDPOINT_NAME, vs_index_fullname).similarity_search(
+  query_vector=embeddings[0],
+  columns=["id", "content"],
+  num_results=1)
+docs = results.get('result', {}).get('data_array', [])
+docs
