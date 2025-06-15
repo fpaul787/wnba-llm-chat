@@ -61,6 +61,8 @@ df.write.mode("overwrite").saveAsTable(f"{catalog}.{schema}.{table_name}")
 
 # COMMAND ----------
 
+from pyspark.sql.functions import pandas_udf
+import pandas as pd
 # Create a UDF to chunk our summaries
 @pandas_udf("array<string>")
 def read_as_chunk(texts: pd.Series) -> pd.Series:
