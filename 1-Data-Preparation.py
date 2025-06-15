@@ -70,6 +70,16 @@ def read_as_chunk(texts: pd.Series) -> pd.Series:
 
 # COMMAND ----------
 
+import mlflow.deployments
+deploy_client = mlflow.deployments.get_deploy_client("databricks")
+
+#Embeddings endpoints convert text into a vector (array of float). Here is an example using GTEgte:
+response = deploy_client.predict(endpoint="databricks-gte-large-en", inputs={"input": ["What is Apache Spark?"]})
+embeddings = [e['embedding'] for e in response.data]
+print(embeddings)
+
+# COMMAND ----------
+
 @pandas_udf("array<float>")
 def get_embedding(contents: pd.Series) -> pd.Series:
     import mlflow.deployments
@@ -92,14 +102,29 @@ def get_embedding(contents: pd.Series) -> pd.Series:
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC This part really isn't necessary since the content will end up being exactly the same as the game_summary column, but I'm following through with it as part of procedure. 
+
+# COMMAND ----------
+
+from pyspark.sql.functions import explode
 table_name = "wnba_game_summaries"
 df = spark.read.table(f"{catalog}.{schema}.{table_name}")
-chunks_df = df
-    .withColumn("content", read_as_chunk("game_summary"))
-    .withColumn("embedding", get_embedding("content"))
+
+chunks_df = df \
+    .withColumn("content", explode(read_as_chunk("game_summary"))) \
+    .withColumn("embedding", get_embedding("content")) \
+    .drop("game_summary")
+
+# COMMAND ----------
+
+display(chunks_df)
+
+# COMMAND ----------
+
 chunks_df.write.mode("overwrite").saveAsTable(f"{catalog}.{schema}.wnba_summary_embeddings")
 
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC SELECT * FROM wnba_summary_embeddings limit 1
+# MAGIC SELECT * FROM frantzpaul_tech.wnba_rag.wnba_summary_embeddings limit 1
