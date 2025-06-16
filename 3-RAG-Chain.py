@@ -243,4 +243,67 @@ chain.invoke(model_config.get("input_example"))
 
 # COMMAND ----------
 
+MODEL_NAME = "wnba_rag"
+MODEL_TABLE_NAME = f"{catalog}.{schema}.{MODEL_NAME}"
+
+# COMMAND ----------
+
+def wait_for_model_serving_endpoint_to_be_ready(ep_name):
+    from databricks.sdk import WorkspaceClient
+    from databricks.sdk.service.serving import EndpointStateReady, EndpointStateConfigUpdate
+    import time
+
+    w = WorkspaceClient()
+    state = ""
+    for i in range(200):
+        state = w.serving_endpoints.get(ep_name).state
+        if state.config_update == EndpointStateConfigUpdate.IN_PROGRESS:
+            if i % 40 == 0:
+                print(f"Waiting for endpoint to deploy {ep_name}. Current state: {state}")
+            time.sleep(10)
+        elif state.ready == EndpointStateReady.READY:
+          print('endpoint ready.')
+          return
+        else:
+          break
+    raise Exception(f"Couldn't start the endpoint, timeout, please check your endpoint for more details: {state}")
+
+# COMMAND ----------
+
+from databricks import agents
+
+unity_catalog_model_info = mlflow.register_model(model_uri=logged_chain_info.model_uri, name=MODEL_TABLE_NAME)
+
+deployment_info = agents.deploy(model_name=MODEL_TABLE_NAME, model_version=unity_catalog_model_info.version, scale_to_zero=True)
+
+instructions_to_reviewer = f"""### Instructions for Testing the our Databricks WNBA Chatbot assistant
+
+Your inputs are invaluable for the development team. By providing detailed feedback and corrections, you help us fix issues and improve the overall quality of the application. We rely on your expertise to identify any gaps or areas needing enhancement.
+
+1. **Variety of Questions**:
+   - Please try a wide range of questions that you anticipate the end users of the application will ask. This helps us ensure the application can handle the expected queries effectively.
+
+2. **Feedback on Answers**:
+   - After asking each question, use the feedback widgets provided to review the answer given by the application.
+   - If you think the answer is incorrect or could be improved, please use "Edit Answer" to correct it. Your corrections will enable our team to refine the application's accuracy.
+
+3. **Review of Returned Documents**:
+   - Carefully review each document that the system returns in response to your question.
+   - Use the thumbs up/down feature to indicate whether the document was relevant to the question asked. A thumbs up signifies relevance, while a thumbs down indicates the document was not useful.
+
+Thank you for your time and effort in testing our assistant. Your contributions are essential to delivering a high-quality product to our end users."""
+
+agents.set_review_instructions(MODEL_TABLE_NAME, instructions_to_reviewer)
+wait_for_model_serving_endpoint_to_be_ready(deployment_info.endpoint_name)
+
+# COMMAND ----------
+
+user_list = ["frantz@frantzpaul.tech"]
+# Set the permissions.
+agents.set_permissions(model_name=MODEL_TABLE_NAME, users=user_list, permission_level=agents.PermissionLevel.CAN_QUERY)
+
+print(f"Share this URL with your stakeholders: {deployment_info.review_app_url}")
+
+# COMMAND ----------
+
 
