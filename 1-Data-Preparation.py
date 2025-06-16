@@ -1,4 +1,9 @@
 # Databricks notebook source
+# MAGIC %md
+# MAGIC # Preparing Game Data for LLM and Self Managed Vector Search Embeddings
+
+# COMMAND ----------
+
 # Read in data
 catalog = "frantzpaul_tech"
 schema = "wnba_rag"
@@ -63,7 +68,7 @@ df.write.mode("overwrite").saveAsTable(f"{catalog}.{schema}.{table_name}")
 
 from pyspark.sql.functions import pandas_udf
 import pandas as pd
-# Create a UDF to chunk our summaries
+
 @pandas_udf("array<string>")
 def read_as_chunk(texts: pd.Series) -> pd.Series:
     return texts.apply(lambda x: [x] if pd.notnull(x) and x.strip() else [])
