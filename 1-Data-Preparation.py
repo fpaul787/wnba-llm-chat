@@ -4,7 +4,6 @@
 
 # COMMAND ----------
 
-# Read in data
 catalog = "frantzpaul_tech"
 schema = "wnba_rag"
 wnba_df = spark.read.table(f"{catalog}.{schema}.team_box_2025")
