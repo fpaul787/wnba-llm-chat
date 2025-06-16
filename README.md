@@ -16,11 +16,16 @@ team data from the 2025 season. Since the data was mostly numeric with some shor
 After curating the dataset, I created embeddings based on the game summaries. These embeddings were created using the `databricks-gte-large-en` embedding model provided by Databricks. Databricks refers to the embeddings that you created on your own as `self managed embeddings`.  I saved the embeddings, along with the content to a delta table in Databricks. These embeddings were used in the vector search index step.
 
 ## Vector Search Index
-Databricks provides the infrastructure for creating the vector search index and providing an endpoint to access the index. Its relatively simple through the Python SDK and the Databricks UI. More information can be found [here](https://docs.databricks.com/aws/en/generative-ai/create-query-vector-search).
+Databricks provides the infrastructure for creating the vector search index and providing an endpoint to access the index. It's relatively simple through the Python SDK and the Databricks UI. More information can be found [here](https://docs.databricks.com/aws/en/generative-ai/create-query-vector-search).
 
 ## RAG Chain
-After preparing the dataset and vector search index, now is time for the fun part of performing RAG and building our chatbot. 
+After preparing the dataset and vector search index, now is time for the fun part of performing RAG and building our chatbot. This part was built with LangChain and Databricks configurations. Here are some screenshots to show the application in use. I wish I could provide a link to access chatbot but having the endpoint turned on will incur cost :) 
 
+![wnba chatbot image 1. Example "In the lat game for teh Aces vs Sparks, who won that game?"](images/sc1.png)
+![wnba chatbot image 2](images/sc2.png)
+![wnba chatbot image 3](images/sc3.png)
+
+As you can see, Databricks provides a decent environment to test the RAG application.
 ## Next Steps
 
-For further development, I would like to incorporate data from previous seasons and include player data with that as well. This small project made me realize that for LLM applications, your dataset and how you're training matters a lot and sometimes takes the most time.
+For further development, I would like to incorporate data from previous seasons and include player data with that as well. This small project made me realize that for LLM applications, your dataset and how you're training matters a lot and sometimes takes the most time. Additionally, evaluation is a very important step for applications like these. I look forward to diving into evaluation for the RAG application and the tools that Databricks provides. 
