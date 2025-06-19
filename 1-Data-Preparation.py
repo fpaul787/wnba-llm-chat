@@ -6,16 +6,64 @@
 
 catalog = "frantzpaul_tech"
 schema = "wnba_rag"
-wnba_df = spark.read.table(f"{catalog}.{schema}.team_box_2025")
-display(wnba_df)
+start_year = "2003"
+end_year = "2025"
+team_table_name_prefix = f"{catalog}.{schema}.team_box"
+team_box_combined_table_name = f"{catalog}.{schema}.team_box_combined"
+player_table_name_prefix = f"{catalog}.{schema}.player_box"
+player_box_combined_table_name = f"{catalog}.{schema}.player_box_combined"
 
 # COMMAND ----------
 
-wnba_clean_df = wnba_df.drop("season_type", "team_id", "team_uid", "team_slug", "team_abbreviation", "team_short_display_name",
+def combine_stats_df(start_year, end_year, table_name_prefix, df):
+    combined_df = df
+    for year in range(int(start_year), int(end_year) + 1):
+        table_name = f"{table_name_prefix}_{year}"
+        df = spark.read.table(table_name)
+        
+        combined_df = combined_df.union(df)
+
+    return combined_df
+
+
+# COMMAND ----------
+
+table_name_2025 = "team_box_2025"
+team_box_schema = spark.table(f"{catalog}.{schema}.{table_name_2025}").schema
+
+team_box_df = spark.createDataFrame([], team_box_schema)
+team_box_df.write.mode("overwrite").saveAsTable(team_box_combined_table_name)
+
+
+player_name_2025 = "player_box_2025"
+player_box_schema = spark.table(f"{catalog}.{schema}.{player_name_2025}").schema
+
+player_box_df = spark.createDataFrame([], player_box_schema)
+player_box_df.write.mode("overwrite").saveAsTable(player_box_combined_table_name)
+
+# COMMAND ----------
+
+combined_team_box_df = combine_stats_df(start_year, end_year, team_table_name_prefix, team_box_df)
+combined_player_box_df = combine_stats_df(start_year, end_year, player_table_name_prefix, player_box_df)
+
+# Save to table
+combined_team_box_df.write.mode("overwrite").saveAsTable(team_box_combined_table_name)
+combined_player_box_df.write.mode("overwrite").saveAsTable(player_box_combined_table_name)
+
+display(combined_team_box_df)
+display(combined_player_box_df)
+
+# COMMAND ----------
+
+wnba_team_box_clean_df = combined_team_box_df.drop("season_type", "team_id", "team_uid", "team_slug", "team_abbreviation", "team_short_display_name",
 "team_color", "team_alternate_color", "team_logo", "opponent_team_id",
 "opponent_team_uid", "opponent_team_slug", "opponent_team_abbreviation",
 "opponent_team_short_display_name", "opponent_team_color", "opponent_team_alternate_color", "opponent_team_logo")
-display(wnba_clean_df)
+display(wnba_team_box_clean_df)
+
+# COMMAND ----------
+
+
 
 # COMMAND ----------
 
