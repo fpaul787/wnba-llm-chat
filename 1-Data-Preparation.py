@@ -63,7 +63,9 @@ display(wnba_team_box_clean_df)
 
 # COMMAND ----------
 
+from pyspark.sql import functions as F
 
+wnba_team_box_clean_df = wnba_team_box_clean_df.filter(F.col("game_id") != "game_id")
 
 # COMMAND ----------
 
