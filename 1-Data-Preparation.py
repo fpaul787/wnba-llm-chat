@@ -120,16 +120,16 @@ def create_player_game_summary(row):
 
     plus_minus_part = ""
     if row.plus_minus is not None:
-        plus_minus_part = f", finishing with a plus/minus was {row.plus_minus}. "
+        plus_minus_part = f", finishing with a plus/minus was {row.plus_minus} "
     else:
         plus_minus_part = ""
 
     if row.did_not_play is not None and row.did_not_play == True:
         reason = ""
         if row.reason is not None:
-            reason = f"Did not play due to {row.reason}."
+            reason = f"Did not play due to {row.reason}"
         else:
-            reason = "Did not play."
+            reason = "Did not play"
         
         return (
              f"On {row.game_date} ({row.season}), {row.athlete_display_name} "
@@ -145,7 +145,7 @@ def create_player_game_summary(row):
         f"She played {row.minutes} minutes, recording {row.points} points, {shooting_part}"
         f"She added {row.rebounds} rebounds ({row.offensive_rebounds} offensive, {row.defensive_rebounds} defensive), "
         f"{row.assists} assists, {row.steals} steals, and {row.blocks} blocks, while committing {row.fouls} fouls and {row.turnovers} turnovers"
-        f"{plus_minus_part}.{ejected_part}{did_not_play_part}"
+        f"{plus_minus_part}{ejected_part}{did_not_play_part}."
     )
 
 
