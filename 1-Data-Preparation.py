@@ -47,14 +47,6 @@ display(wnba_player_box_clean_df)
 
 # COMMAND ----------
 
-wnba_player_box_clean_df.columns
-
-# COMMAND ----------
-
-"On {game_date} ({season}), {athlete_display_name} (#{{athlete_jersey}}, {athlete_position_name}) played for the {team_location} {team_name} in a {home_away} game against the {opponent_team_location} {opponent_team_name} ({opponent_team_display_name}). The final score was {team_score}-{opponent_team_score}, and the {'win' if team_winner else 'loss'} impacted {athlete_display_name}. He played {minutes} minutes, recording {points} points, shooting {field_goals_made}/{field_goals_attempted} from the field, {three_point_field_goals_made}/{three_point_field_goals_attempted} from three, and {free_throws_made}/{free_throws_attempted} from the line. He added {rebounds} rebounds ({offensive_rebounds} offensive, {defensive_rebounds} defensive), {assists} assists, {steals} steals, and {blocks} blocks, while committing {fouls} fouls and {turnovers} turnovers, finishing with a plus/minus of {plus_minus}. {'He was ejected.' if ejected else ''} {'Did not play due to ' + reason if did_not_play else ''}"
-
-# COMMAND ----------
-
 from pyspark.sql.functions import udf, struct
 from pyspark.sql.types import StringType
 
