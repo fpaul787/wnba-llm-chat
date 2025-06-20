@@ -222,6 +222,11 @@ df.write.mode("overwrite").saveAsTable(f"{catalog}.{schema}.{table_name}")
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC Update: game summaries used to short, now they are long because of game summaries and player summaries. Now we should chunk
+
+# COMMAND ----------
+
 from pyspark.sql.functions import pandas_udf
 import pandas as pd
 
