@@ -4,6 +4,11 @@
 
 # COMMAND ----------
 
+# MAGIC %pip install --quiet llama-index==0.10.43 transformers==4.49.0 langchain-text-splitters==0.2.0 torch==2.6.0
+# MAGIC dbutils.library.restartPython()
+
+# COMMAND ----------
+
 catalog = "frantzpaul_tech"
 schema = "wnba_rag"
 team_box_combined_table_name = f"{catalog}.{schema}.team_box_combined"
@@ -223,16 +228,28 @@ df.write.mode("overwrite").saveAsTable(f"{catalog}.{schema}.{table_name}")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC Update: game summaries used to short, now they are long because of game summaries and player summaries. Now we should chunk
+# MAGIC Update: game summaries used to short, now they are long because of game summaries and player summaries. Now we should chunk.
 
 # COMMAND ----------
 
 from pyspark.sql.functions import pandas_udf
+from llama_index.core.node_parser import SentenceSplitter
 import pandas as pd
+from llama_index.core import Document, set_global_tokenizer
+from transformers import AutoTokenizer
+from typing import Iterator
 
 @pandas_udf("array<string>")
-def read_as_chunk(texts: pd.Series) -> pd.Series:
-    return texts.apply(lambda x: [x] if pd.notnull(x) and x.strip() else [])
+def read_as_chunk(batch_iter: Iterator[pd.Series]) -> Iterator[pd.Series]:
+    tokenizer = AutoTokenizer.from_pretrained("hf-internal-testing/llama-tokenizer", cache_dir="/tmp/hf_cache")
+    set_global_tokenizer(tokenizer)
+
+    splitter = SentenceSplitter(chunk_size=1000, chunk_overlap=10)
+    for batch in batch_iter:
+        # Convert each text to Document, split, return chunk texts
+        yield batch.apply(
+            lambda x: [node.text for node in splitter.get_nodes_from_documents([Document(text=x)])] if pd.notnull(x) else []
+        )
 
 # COMMAND ----------
 
@@ -268,9 +285,9 @@ table_name = "wnba_game_summaries"
 df = spark.read.table(f"{catalog}.{schema}.{table_name}")
 
 chunks_df = df \
-    .withColumn("content", explode(read_as_chunk("game_summary"))) \
+    .withColumn("content", explode(read_as_chunk("summary"))) \
     .withColumn("embedding", get_embedding("content")) \
-    .drop("game_summary")
+    .drop("summary")
 
 # COMMAND ----------
 
@@ -294,7 +311,7 @@ display(chunks_df)
 
 # COMMAND ----------
 
-chunks_df.write.mode("append").saveAsTable(f"{catalog}.{schema}.wnba_summary_embeddings")
+chunks_df.write.mode("overwrite").saveAsTable(f"{catalog}.{schema}.wnba_summary_embeddings")
 
 # COMMAND ----------
 
