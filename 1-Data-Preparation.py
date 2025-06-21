@@ -245,6 +245,11 @@ def read_as_chunk(batch_iter: Iterator[pd.Series]) -> Iterator[pd.Series]:
 
 # COMMAND ----------
 
+# MAGIC %md
+# MAGIC ## Compute Embeddings
+
+# COMMAND ----------
+
 @pandas_udf("array<float>")
 def get_embedding(contents: pd.Series) -> pd.Series:
     import mlflow.deployments
