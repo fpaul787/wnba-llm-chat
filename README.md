@@ -19,7 +19,7 @@ I did the same thing for player summaries:
 Aftwards, I merged the game and player summaries using the `game_id` id. This id identifies the specific game that is attached to the statistics.
 ### Embeddings
 
-Once the summaries were created, I generated embeddings using the `databricks-gte-large-en` model provided by Databricks. These are what Databricks calls self-managed embeddings. I stored the embeddings and the corresponding summaries in a Delta table, which was later used to power vector search.
+Once the summaries were created, I generated embeddings using the `databricks-gte-large-en` [model](https://docs.databricks.com/aws/en/machine-learning/foundation-model-apis/supported-models#gte-large-en) provided by Databricks. This model is good for RAG use cases because of its large embedding window. The embeddings are then saved to a delta table. This is called self-managed embeddings in Databricks because I created and managed the embedding for my data. 
 
 ## Vector Search Index
 Databricks provides the infrastructure for creating the vector search index and providing an endpoint to access the index. It's relatively simple through the Python SDK and the Databricks UI. More information can be found [here](https://docs.databricks.com/aws/en/generative-ai/create-query-vector-search).
