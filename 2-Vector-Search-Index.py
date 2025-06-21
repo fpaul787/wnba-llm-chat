@@ -145,7 +145,7 @@ else:
 import mlflow.deployments
 deploy_client = mlflow.deployments.get_deploy_client("databricks")
 
-question = "Did the Sparks beat the Aces?"
+question = "In their latest match up, did the Sparks beat the Aces?"
 
 response = deploy_client.predict(endpoint="databricks-gte-large-en", inputs={"input": [question]})
 embeddings = [e['embedding'] for e in response.data]
