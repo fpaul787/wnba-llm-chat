@@ -27,19 +27,17 @@ Databricks provides the infrastructure for creating the vector search index and 
 ## RAG Chain
 With the dataset and vector search index ready, the next step was to build the RAG chain and chatbot. This was implemented using LangChain and Databricks-specific integrations.
 
-Although I can't provide a live demo (since keeping the endpoint active incurs cost), here are some screenshots of the chatbot in action.
+Here are some screenshots of the chatbot in action.
 
-![wnba chatbot image 1. Example "In the lat game for teh Aces vs Sparks, who won that game?"](images/sc1.png)
+![wnba chatbot image 1. Example "In the latest game for teh Aces vs Sparks, who won that game?"](images/sc1.png)
 ![wnba chatbot image 2](images/sc2.png)
 ![wnba chatbot image 3](images/sc3.png)
 
 As shown in this project, Databricks provides a solid environment for developing and testing RAG applications. The integration of vector search, Delta tables, and embedding models makes it a practical platform for experimenting with LLM-based workflows.
+
 ## Next Steps
 
 For future development, I'd like to:
-
-- Incorporate **historical data from previous WNBA seasons**
-- Include **player-level data** alongside team statistics
 - Explore **more advanced chunking and summarization techniques**
 - Evaluate **embedding quality and retrieval accuracy**
 
