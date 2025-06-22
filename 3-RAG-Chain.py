@@ -15,7 +15,8 @@ schema = "wnba_rag"
 
 #The table we'd like to index
 source_table_fullname = f"{catalog}.{schema}.wnba_summary_embeddings"
-# Where we want to store our index
+
+# vector search index
 vs_index_fullname = f"{catalog}.{schema}.wnba_summary_embeddings_self_managed_vs_index"
 
 # COMMAND ----------
@@ -276,6 +277,8 @@ unity_catalog_model_info = mlflow.register_model(model_uri=logged_chain_info.mod
 
 deployment_info = agents.deploy(model_name=MODEL_TABLE_NAME, model_version=unity_catalog_model_info.version, scale_to_zero=True)
 
+# COMMAND ----------
+
 instructions_to_reviewer = f"""### Instructions for Testing the our Databricks WNBA Chatbot assistant
 
 Your inputs are invaluable for the development team. By providing detailed feedback and corrections, you help us fix issues and improve the overall quality of the application. We rely on your expertise to identify any gaps or areas needing enhancement.
@@ -306,4 +309,6 @@ print(f"Share this URL with your stakeholders: {deployment_info.review_app_url}"
 
 # COMMAND ----------
 
-
+# MAGIC %sql
+# MAGIC SELECT * FROM frantzpaul_tech.wnba_rag.wnba_game_summaries
+# MAGIC WHERE game_id = '401736152';
