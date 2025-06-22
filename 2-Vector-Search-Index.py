@@ -145,10 +145,13 @@ else:
 import mlflow.deployments
 deploy_client = mlflow.deployments.get_deploy_client("databricks")
 
-question = "In their latest match up, did the Sparks beat the Aces?"
+question = "Did the Sparks beat the Aces in the 2025 season?"
+vsc = VectorSearchClient()
+vs_index_fullname = f"{catalog}.{schema}.wnba_summary_embeddings_self_managed_vs_index"
 
 response = deploy_client.predict(endpoint="databricks-gte-large-en", inputs={"input": [question]})
 embeddings = [e['embedding'] for e in response.data]
+
 
 results = vsc.get_index(VECTOR_SEARCH_ENDPOINT_NAME, vs_index_fullname).similarity_search(
   query_vector=embeddings[0],

@@ -15,7 +15,8 @@ schema = "wnba_rag"
 
 #The table we'd like to index
 source_table_fullname = f"{catalog}.{schema}.wnba_summary_embeddings"
-# Where we want to store our index
+
+# vector search index
 vs_index_fullname = f"{catalog}.{schema}.wnba_summary_embeddings_self_managed_vs_index"
 
 # COMMAND ----------
@@ -311,7 +312,3 @@ print(f"Share this URL with your stakeholders: {deployment_info.review_app_url}"
 # MAGIC %sql
 # MAGIC SELECT * FROM frantzpaul_tech.wnba_rag.wnba_game_summaries
 # MAGIC WHERE game_id = '401736152';
-
-# COMMAND ----------
-
-
