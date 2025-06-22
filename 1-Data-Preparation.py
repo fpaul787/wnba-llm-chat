@@ -1,6 +1,6 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # Preparing Game Data for LLM and Self Managed Vector Search Embeddings
+# MAGIC # Preparing Game Data
 
 # COMMAND ----------
 

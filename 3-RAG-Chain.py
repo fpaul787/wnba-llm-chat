@@ -276,6 +276,8 @@ unity_catalog_model_info = mlflow.register_model(model_uri=logged_chain_info.mod
 
 deployment_info = agents.deploy(model_name=MODEL_TABLE_NAME, model_version=unity_catalog_model_info.version, scale_to_zero=True)
 
+# COMMAND ----------
+
 instructions_to_reviewer = f"""### Instructions for Testing the our Databricks WNBA Chatbot assistant
 
 Your inputs are invaluable for the development team. By providing detailed feedback and corrections, you help us fix issues and improve the overall quality of the application. We rely on your expertise to identify any gaps or areas needing enhancement.
@@ -303,6 +305,12 @@ user_list = ["frantz@frantzpaul.tech"]
 agents.set_permissions(model_name=MODEL_TABLE_NAME, users=user_list, permission_level=agents.PermissionLevel.CAN_QUERY)
 
 print(f"Share this URL with your stakeholders: {deployment_info.review_app_url}")
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT * FROM frantzpaul_tech.wnba_rag.wnba_game_summaries
+# MAGIC WHERE game_id = '401736152';
 
 # COMMAND ----------
 
